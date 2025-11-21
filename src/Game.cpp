@@ -1,7 +1,7 @@
 /*
  * Museum Escape - Game Class Implementation
  * CS/CE 224/272 - Fall 2025
- * SFML 3.0 COMPATIBLE (Warnings Fixed)
+ * SFML 3.0 COMPATIBLE (Door Color Fix)
  */
 
 #include "Game.h"
@@ -11,7 +11,6 @@
 #include <iostream>
 #include <cmath>
 
-// Constructor
 Game::Game() 
     : window(sf::VideoMode({800u, 600u}), "Museum Escape"),
       currentState(GameState::MENU),
@@ -27,44 +26,32 @@ Game::Game()
     initialize();
 }
 
-// Destructor
-Game::~Game() {
-}
+Game::~Game() {}
 
-// Initialize game components
 void Game::initialize() {
     loadAssets();
-    
     player = std::make_unique<Player>(100.0f, 100.0f, playerTexture);
-    
     gameTimer = std::make_unique<Timer>(600.0f);
     gameTimer->setDisplayPosition(650.0f, 20.0f);
     gameTimer->setFont(mainFont);
-    
     inventory = std::make_unique<Inventory>(10);
     inventory->setFont(mainFont);
-    
     createRooms();
     setupPuzzles();
-    
     stateText.setFont(mainFont);
     stateText.setCharacterSize(30);
     stateText.setFillColor(sf::Color::White);
     stateText.setPosition({250.0f, 250.0f});
-    
     notificationText.setFont(mainFont);
     notificationText.setCharacterSize(24);
     notificationText.setPosition({50.0f, 50.0f});
     notificationText.setOutlineThickness(2.0f);
     notificationText.setOutlineColor(sf::Color::Black);
-    
     overlay.setSize({800.0f, 600.0f});
     overlay.setFillColor(sf::Color(0, 0, 0, 150));
-    
     std::cout << "Game initialized successfully!" << std::endl;
 }
 
-// Load assets
 void Game::loadAssets() {
     bool fontLoaded = false;
     if (mainFont.openFromFile("assets/arial.ttf")) fontLoaded = true;
@@ -73,92 +60,79 @@ void Game::loadAssets() {
     
     if (!fontLoaded) std::cerr << "Warning: Could not load font!" << std::endl;
     
-    // --- FIXED: Checked return value of loadFromImage to satisfy [[nodiscard]] ---
     if (!playerTexture.loadFromFile("assets/player.png")) {
-        sf::Image img;
-        img.resize({40, 40}, sf::Color::Green);
-        if (!playerTexture.loadFromImage(img)) {
-            std::cerr << "Error: Failed to load player fallback texture." << std::endl;
-        }
-        std::cout << "Warning: player.png not found, using placeholder." << std::endl;
+        sf::Image img; img.resize({40, 40}, sf::Color::Green);
+        if(!playerTexture.loadFromImage(img)) {}
+        std::cout << "Warning: player.png not found." << std::endl;
     }
-
     if (!guardTexture.loadFromFile("assets/guard.png")) {
-        sf::Image img;
-        img.resize({40, 40}, sf::Color::Red);
-        if (!guardTexture.loadFromImage(img)) {
-            std::cerr << "Error: Failed to load guard fallback texture." << std::endl;
-        }
-        std::cout << "Warning: guard.png not found, using placeholder." << std::endl;
+        sf::Image img; img.resize({40, 40}, sf::Color::Red);
+        if(!guardTexture.loadFromImage(img)) {}
+        std::cout << "Warning: guard.png not found." << std::endl;
     }
-    
     std::cout << "Assets loaded!" << std::endl;
 }
 
-// Create rooms
 void Game::createRooms() {
-    auto room1 = std::make_shared<Room>(1, "Entrance Hall", 0, 0, 800, 600);
+    // Create Rooms with Backgrounds
+    auto room1 = std::make_shared<Room>(1, "Entrance Hall", 0, 0, 800, 600, "assets/room1.png");
     auto guard1 = std::make_shared<Guard>(200.0f, 200.0f, 100.0f, guardTexture);
-    guard1->addPatrolPoint(200.0f, 200.0f);
-    guard1->addPatrolPoint(600.0f, 200.0f);
-    guard1->addPatrolPoint(600.0f, 400.0f);
-    guard1->addPatrolPoint(200.0f, 400.0f);
+    guard1->addPatrolPoint(200.0f, 200.0f); guard1->addPatrolPoint(600.0f, 200.0f);
+    guard1->addPatrolPoint(600.0f, 400.0f); guard1->addPatrolPoint(200.0f, 400.0f);
     room1->addGuard(guard1);
     rooms[1] = room1;
     
-    auto room2 = std::make_shared<Room>(2, "Storage Room", 0, 0, 800, 600);
+    auto room2 = std::make_shared<Room>(2, "Storage Room", 0, 0, 800, 600, "assets/room2.png");
     auto guard2 = std::make_shared<Guard>(150.0f, 300.0f, 110.0f, guardTexture);
-    guard2->addPatrolPoint(150.0f, 300.0f);
-    guard2->addPatrolPoint(650.0f, 300.0f);
+    guard2->addPatrolPoint(150.0f, 300.0f); guard2->addPatrolPoint(650.0f, 300.0f);
     room2->addGuard(guard2);
     rooms[2] = room2;
     
-    auto room3 = std::make_shared<Room>(3, "Artifact Room", 0, 0, 800, 600);
+    auto room3 = std::make_shared<Room>(3, "Artifact Room", 0, 0, 800, 600, "assets/room3.png");
     auto secretCode = std::make_shared<Passcode>("Secret Code", "4738", 650.0f, 150.0f);
     room3->addItem(secretCode);
     auto guard3 = std::make_shared<Guard>(300.0f, 200.0f, 100.0f, guardTexture);
-    guard3->addPatrolPoint(300.0f, 200.0f);
-    guard3->addPatrolPoint(500.0f, 400.0f);
+    guard3->addPatrolPoint(300.0f, 200.0f); guard3->addPatrolPoint(500.0f, 400.0f);
     room3->addGuard(guard3);
     rooms[3] = room3;
     
-    auto room4 = std::make_shared<Room>(4, "Security Office", 0, 0, 800, 600);
+    auto room4 = std::make_shared<Room>(4, "Security Office", 0, 0, 800, 600, "assets/room4.png");
     auto guard4a = std::make_shared<Guard>(150.0f, 200.0f, 110.0f, guardTexture);
-    guard4a->addPatrolPoint(150.0f, 200.0f);
-    guard4a->addPatrolPoint(650.0f, 200.0f);
+    guard4a->addPatrolPoint(150.0f, 200.0f); guard4a->addPatrolPoint(650.0f, 200.0f);
     room4->addGuard(guard4a);
     auto guard4b = std::make_shared<Guard>(650.0f, 450.0f, 110.0f, guardTexture);
-    guard4b->addPatrolPoint(650.0f, 450.0f);
-    guard4b->addPatrolPoint(150.0f, 450.0f);
+    guard4b->addPatrolPoint(650.0f, 450.0f); guard4b->addPatrolPoint(150.0f, 450.0f);
     room4->addGuard(guard4b);
     rooms[4] = room4;
     
-    auto room5 = std::make_shared<Room>(5, "Exit Hall", 0, 0, 800, 600);
+    auto room5 = std::make_shared<Room>(5, "Exit Hall", 0, 0, 800, 600, "assets/room5.png");
     room5->setExitRoom(true);
     rooms[5] = room5;
     
+    // Connect Rooms with Doors
+    // --- FIXED: Using "Master Key" instead of "master_key" to match Item Name ---
+    
     room1->addDoor(std::make_shared<Door>(750.0f, 300.0f, 2, false, "")); 
+    
     room2->addDoor(std::make_shared<Door>(50.0f, 300.0f, 1, false, ""));
-    room2->addDoor(std::make_shared<Door>(750.0f, 300.0f, 3, true, "master_key")); 
+    room2->addDoor(std::make_shared<Door>(750.0f, 300.0f, 3, true, "Master Key")); // FIXED
+    
     room3->addDoor(std::make_shared<Door>(50.0f, 300.0f, 2, false, "")); 
     room3->addDoor(std::make_shared<Door>(750.0f, 300.0f, 4, false, ""));
+    
     room4->addDoor(std::make_shared<Door>(50.0f, 300.0f, 3, false, "")); 
-    room4->addDoor(std::make_shared<Door>(750.0f, 300.0f, 5, true, "security_card"));
+    room4->addDoor(std::make_shared<Door>(750.0f, 300.0f, 5, true, "Security Card")); // FIXED
+    
     room5->addDoor(std::make_shared<Door>(50.0f, 300.0f, 4, false, ""));
 }
 
 void Game::setupPuzzles() {
     auto patternPuzzle = std::make_shared<PatternPuzzle>(std::vector<int>{1, 3, 2, 4});
-    patternPuzzle->setFont(mainFont);
-    rooms[2]->addPuzzle(patternPuzzle);
-    
+    patternPuzzle->setFont(mainFont); rooms[2]->addPuzzle(patternPuzzle);
     auto riddle = std::make_shared<RiddlePuzzle>("I speak without a mouth and hear without ears.\nI have no body, but come alive with wind.\nWhat am I?", "echo");
-    riddle->setFont(mainFont);
-    rooms[3]->addPuzzle(riddle);
-    
+    riddle->setFont(mainFont); rooms[3]->addPuzzle(riddle);
     auto lockPuzzle = std::make_shared<LockPuzzle>("4738");
-    lockPuzzle->setFont(mainFont);
-    rooms[4]->addPuzzle(lockPuzzle);
+    lockPuzzle->setFont(mainFont); rooms[4]->addPuzzle(lockPuzzle);
 }
 
 void Game::run() {
@@ -172,9 +146,7 @@ void Game::run() {
 
 void Game::processEvents() {
     while (const std::optional event = window.pollEvent()) {
-        if (event->is<sf::Event::Closed>()) {
-            window.close();
-        }
+        if (event->is<sf::Event::Closed>()) window.close();
         switch (currentState) {
             case GameState::MENU: handleMenuInput(*event); break;
             case GameState::PLAYING: handlePlayingInput(*event); break;
@@ -199,10 +171,7 @@ void Game::handlePlayingInput(const sf::Event& event) {
     if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
         if (keyPressed->code == sf::Keyboard::Key::Escape) pauseGame();
         if (keyPressed->code == sf::Keyboard::Key::I) inventory->toggleVisibility();
-        if (keyPressed->code == sf::Keyboard::Key::E) {
-            checkDoorInteraction();
-            checkItemPickup();
-        }
+        if (keyPressed->code == sf::Keyboard::Key::E) { checkDoorInteraction(); checkItemPickup(); }
         if (keyPressed->code == sf::Keyboard::Key::P) checkPuzzleInteraction();
     }
 }
@@ -215,11 +184,13 @@ void Game::handlePuzzleInput(const sf::Event& event) {
             gameTimer->addTime(activePuzzle->getTimeBonus());
             showNotification("Puzzle Solved! +" + std::to_string(activePuzzle->getTimeBonus()) + "s", sf::Color::Green, 3.0f);
             if (currentRoomID == 2) {
-                auto masterKey = std::make_shared<Key>("Master Key", "master_key", 650.0f, 500.0f);
+                // FIXED: Using "Master Key" for internal ID to match Item Name
+                auto masterKey = std::make_shared<Key>("Master Key", "Master Key", 650.0f, 500.0f);
                 rooms[2]->addItem(masterKey);
                 showNotification("Master Key appeared!", sf::Color::Yellow, 4.0f);
             } else if (currentRoomID == 4) {
-                auto securityCard = std::make_shared<Key>("Security Card", "security_card", 650.0f, 500.0f);
+                // FIXED: Using "Security Card" for internal ID to match Item Name
+                auto securityCard = std::make_shared<Key>("Security Card", "Security Card", 650.0f, 500.0f);
                 rooms[4]->addItem(securityCard);
                 showNotification("Security Card appeared!", sf::Color::Cyan, 4.0f);
             }
@@ -251,21 +222,41 @@ void Game::update() {
 }
 
 void Game::updateMenu() {}
+
 void Game::updatePlaying() {
     gameTimer->update(deltaTime);
     if (notificationTimer > 0) notificationTimer -= deltaTime;
     player->handleInput(deltaTime);
     player->update(deltaTime);
+    
     if (rooms.find(currentRoomID) != rooms.end()) {
         rooms[currentRoomID]->update(deltaTime);
+        
+        // 1. Update Guards (Keep moving!)
         auto& guards = rooms[currentRoomID]->getGuards();
         for (auto& guard : guards) guard->update(deltaTime, *player);
+        
+        // 2. Update Door Colors
+        auto& doors = rooms[currentRoomID]->getDoors();
+        for (auto& door : doors) {
+            if (door->getLockedStatus()) {
+                std::string keyNeeded = door->getRequiredKey();
+                // Now that names match ("Master Key" == "Master Key"), this will return TRUE
+                if (player->hasItem(keyNeeded)) {
+                    door->setColor(sf::Color::Blue); // READY
+                } else {
+                    door->setColor(sf::Color::Red); // LOCKED
+                }
+            }
+        }
     }
+    
     checkCollisions();
     checkGuardDetection();
     checkWinCondition();
     checkLoseCondition();
 }
+
 void Game::updatePuzzle() { if (activePuzzle) activePuzzle->update(deltaTime); }
 void Game::updateGameOver() {}
 
@@ -286,14 +277,12 @@ void Game::renderMenu() {
     sf::RectangleShape bg({800.0f, 600.0f});
     bg.setFillColor(sf::Color(20, 20, 35));
     window.draw(bg);
-
     sf::RectangleShape titleBar({800.0f, 120.0f});
     titleBar.setPosition({0.0f, 100.0f});
     titleBar.setFillColor(sf::Color(0, 0, 0, 100));
     titleBar.setOutlineThickness(2.0f);
     titleBar.setOutlineColor(sf::Color::Yellow);
     window.draw(titleBar);
-
     stateText.setString("MUSEUM ESCAPE");
     stateText.setCharacterSize(60);
     stateText.setStyle(sf::Text::Bold);
@@ -301,21 +290,18 @@ void Game::renderMenu() {
     sf::FloatRect bounds = stateText.getLocalBounds();
     stateText.setPosition({400.0f - bounds.size.x / 2.0f, 120.0f});
     window.draw(stateText);
-
     sf::RectangleShape controlsBox({400.0f, 200.0f});
     controlsBox.setPosition({200.0f, 300.0f});
     controlsBox.setFillColor(sf::Color(50, 50, 50));
     controlsBox.setOutlineThickness(1.0f);
     controlsBox.setOutlineColor(sf::Color::White);
     window.draw(controlsBox);
-
     sf::Text controls(mainFont);
     controls.setString("CONTROLS\n\nWASD  - Move\nE     - Interact / Pickup\nP     - Puzzle\nI     - Inventory");
     controls.setCharacterSize(20);
     controls.setFillColor(sf::Color::White);
     controls.setPosition({220.0f, 320.0f});
     window.draw(controls);
-
     float time = clock.getElapsedTime().asSeconds();
     int alpha = static_cast<int>((sin(time * 3.0f) + 1.0f) / 2.0f * 255);
     sf::Text startText(mainFont);
@@ -330,20 +316,17 @@ void Game::renderMenu() {
 void Game::renderPlaying() {
     if (rooms.find(currentRoomID) != rooms.end()) rooms[currentRoomID]->draw(window);
     player->draw(window);
-
     sf::RectangleShape topBar({800.0f, 40.0f});
     topBar.setFillColor(sf::Color(30, 30, 30));
     topBar.setOutlineThickness(1.0f);
     topBar.setOutlineColor(sf::Color(100, 100, 100));
     window.draw(topBar);
-
     sf::Text roomText(mainFont);
     if (rooms.find(currentRoomID) != rooms.end()) roomText.setString("LOCATION: " + rooms[currentRoomID]->getRoomName());
     roomText.setCharacterSize(18);
     roomText.setFillColor(sf::Color::Cyan);
     roomText.setPosition({10.0f, 8.0f});
     window.draw(roomText);
-
     sf::Text timeText(mainFont);
     timeText.setString("TIME REMAINING: " + gameTimer->getFormattedTime());
     timeText.setCharacterSize(18);
@@ -352,14 +335,12 @@ void Game::renderPlaying() {
     sf::FloatRect timeBounds = timeText.getLocalBounds();
     timeText.setPosition({790.0f - timeBounds.size.x, 8.0f});
     window.draw(timeText);
-
     sf::Text invHint(mainFont);
     invHint.setString("[I] Inventory  [P] Puzzle  [ESC] Pause");
     invHint.setCharacterSize(14);
     invHint.setFillColor(sf::Color(150, 150, 150));
     invHint.setPosition({550.0f, 580.0f});
     window.draw(invHint);
-
     if (inventory->getVisible()) inventory->draw(window);
     if (notificationTimer > 0) {
         notificationText.setString(currentNotification);
@@ -438,10 +419,8 @@ void Game::checkDoorInteraction() {
         if (door->checkCollision(playerBounds)) {
             if (door->getLockedStatus()) {
                 bool hasKey = false;
-                std::string requiredKey = "";
-                int targetRoom = door->getTargetRoomID();
-                if (targetRoom == 3) requiredKey = "Master Key";
-                else if (targetRoom == 5) requiredKey = "Security Card";
+                // --- FIXED: Use the actual required key from the door logic ---
+                std::string requiredKey = door->getRequiredKey(); 
                 
                 auto& inv = player->getInventory();
                 for (auto* item : inv) {
