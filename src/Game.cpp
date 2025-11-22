@@ -174,7 +174,7 @@ void Game::handleMenuInput(const sf::Event& event) {
 
 void Game::handlePlayingInput(const sf::Event& event) {
     if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
-        if (keyPressed->code == sf::Keyboard::Key::Escape) pauseGame();
+        if (keyPressed->code == sf::Keyboard::Key::Space) pauseGame();
         if (keyPressed->code == sf::Keyboard::Key::I) inventory->toggleVisibility();
         if (keyPressed->code == sf::Keyboard::Key::E) { checkDoorInteraction(); checkItemPickup(); }
         if (keyPressed->code == sf::Keyboard::Key::P) checkPuzzleInteraction();
@@ -212,7 +212,7 @@ void Game::handlePuzzleInput(const sf::Event& event) {
 
 void Game::handlePauseInput(const sf::Event& event) {
     if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
-        if (keyPressed->code == sf::Keyboard::Key::Escape) resumeGame();
+        if (keyPressed->code == sf::Keyboard::Key::Space) resumeGame();
     }
 }
 

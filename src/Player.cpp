@@ -20,7 +20,7 @@ Player::Player(float x, float y, const sf::Texture& texture)
     sprite.setPosition(position);
     
     // If the sprite is too big, you can scale it here:
-    sprite.setScale({0.1f, 0.1f}); 
+    sprite.setScale({0.05f, 0.05f}); 
 }
 
 // Move player by delta amounts
